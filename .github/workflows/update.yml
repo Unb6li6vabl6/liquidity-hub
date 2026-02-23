@@ -1,22 +1,26 @@
 name: Live Data Update
 on:
   schedule:
-    - cron: '0 */4 * * *' # Aktualizacja co 4 godziny
-  workflow_dispatch:
+    - cron: '0 */4 * * *'  # Automatycznie co 4 godziny
+  workflow_dispatch:       # TO DAJE CI TEN PRZYCISK, KTÓRY WIDZIAŁEŚ
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: Setup Python
-        run: pip install requests yfinance
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Install dependencies
+        run: pip install requests yfinance pandas
       - name: Run Updater
         run: python updater.py
         env:
-          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}  # TO JEST NAJWAŻNIEJSZE
       - name: Commit data
         run: |
-          git config --global user.name 'Bot'
+          git config --global user.name 'LiquidityBot'
           git add data.json
           git commit -m "Update" || exit 0
           git push
