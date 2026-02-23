@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liquidity Intelligence Hub LIVE</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #D7C4A3; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+        const { 
+            LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip: ReChartsTooltip, 
+            Legend, ResponsiveContainer, AreaChart, Area, BarChart, Bar, 
+            ComposedChart, Cell, ReferenceLine 
+        } = Recharts;
+
+        // Import ikon przez globalny obiekt Lucide
+        const Icon = ({ name, size = 16, className = "" }) => {
+            const LucideIcon = lucide[name.charAt(0).toUpperCase() + name.slice(1)];
+            return LucideIcon ? <LucideIcon size={size} className={className} /> : null;
+        };
+
+        // --- TWOJE DANE Z KOD50.TXT (FRAGMENTY) ---
+        const INITIAL_AGGREGATES = [
+            { id: 1, title: "Net Liquidity (Live)", value: "5945.8B", trend: "up", info: "Bilans Fed - (TGA + ON RRP)." },
+            { id: 2, title: "TGA Balance (Live)", value: "612.4B", trend: "down", info: "Rachunek Skarbu w Fed." },
+            { id: 3, title: "ON RRP (Live)", value: "1.2B", trend: "down", info: "Reverse Repo. Drenaż niemal całkowity." },
+            { id: 21, title: "SOFR Spreads (Live)", value: "+1bps", trend: "up", info: "SOFR przebił IORB!" },
+            { id: 47, title: "SPX Index", value: "7210", trend: "up", info: "Indeks S&P 500." }
+            // ... (Reszta z Twojego pliku kod50.txt zostanie tutaj zmapowana)
+        ];
+
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('liq_spx');
+            const [liveData, setLiveData] = useState(null);
+
+            // FUNKCJA POBIERAJĄCA DANE Z TWOJEGO GITHUB
+            useEffect(() => {
+                fetch('./data.json')
+                    .then(res => res.json())
+                    .then(data => setLiveData(data))
+                    .catch(err => console.log("Czekam na pierwsze wygenerowanie data.json..."));
+            }, []);
+
+            // Łączenie Twoich stałych z kod50.txt z danymi LIVE
+            const displayAggregates = useMemo(() => {
+                if (!liveData) return INITIAL_AGGREGATES;
+                return INITIAL_AGGREGATES.map(item => {
+                    if (item.id === 1) return { ...item, value: `${liveData.net_liq}B` };
+                    if (item.id === 2) return { ...item, value: `${liveData.tga}B` };
+                    if (item.id === 3) return { ...item, value: `${liveData.rrp}B` };
+                    if (item.id === 47) return { ...item, value: liveData.spx.toString() };
+                    return item;
+                });
+            }, [liveData]);
+
+            return (
+                <div className="min-h-screen p-4 text-[12px]">
+                    {/* Tutaj wklej cały swój interfejs JSX z kod50.txt, 
+                        podmieniając AGGREGATES na displayAggregates */}
+                    <header className="bg-[#CBB491] p-6 rounded-2xl shadow-xl flex justify-between items-center mb-8">
+                        <div className="flex items-center gap-4">
+                             <div className="p-3 bg-[#5D4E37] rounded-lg">
+                                <Icon name="Gauge" size={24} className="text-[#D7C4A3]" />
+                             </div>
+                             <h1 className="text-2xl font-black italic uppercase">
+                                Liquidity <span className="text-blue-900 not-italic">Intelligence Hub</span>
+                             </h1>
+                        </div>
+                        <div className="text-right font-bold italic uppercase">
+                            Status: <span className="text-green-700">{liveData ? 'LIVE DATA ACTIVE' : 'LOADING...'}</span>
+                            <br/>
+                            Aktualizacja: {liveData?.last_update || '---'}
+                        </div>
+                    </header>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        {displayAggregates.map(m => (
+                            <div key={m.id} className="bg-[#CFB997] p-4 rounded-xl border border-[#BFA888] shadow-sm">
+                                <div className="text-[10px] uppercase font-black text-[#5D4E37]">{m.title}</div>
+                                <div className="text-xl font-black mt-1">{m.value}</div>
+                            </div>
+                        ))}
+                    </div>
+                    
+                    {/* Reszta Twoich wykresów i zakładek z kod50.txt */}
+                    <div className="mt-10 p-10 bg-white/30 rounded-3xl border border-[#B89F7D]">
+                        <h2 className="text-xl font-black italic uppercase mb-4">Analiza Trendu 18.02.2026</h2>
+                        <p className="text-justify italic font-medium leading-relaxed">
+                            Aktualna Płynność Netto wynosi <strong>${liveData?.net_liq || '5945.8'}B</strong>[cite: 3]. 
+                            Obserwujemy krytyczną anomalię: SOFR (3.66%) jest wyższy niż IORB (3.65%)[cite: 23, 41, 152]. 
+                            Wzrost użycia SRF do <strong>$0.55B</strong> [cite: 9, 226] potwierdza lokalne napięcia przed kwietniowym drenażem podatkowym[cite: 243, 246].
+                        </p>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
